@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const App = () => {
   const [audio, setAudio] = useState(null);
@@ -16,27 +17,28 @@ const App = () => {
     (async () => {
       try {
         setIsLoading(true);
-        // const response = await fetch(`http://localhost:3000/audio-url?videoUrl=${encodeURIComponent(youtubeUrl)}`);
         const response = await fetch(`http://10.0.1.169:3000/audio-url?videoUrl=${encodeURIComponent(youtubeUrl)}`);
         const { audioURL } = await response.json();
 
-        console.log ('audioURL: ', audioURL);
-        
+        console.log('audioURL: ', audioURL);
+
         const { sound } = await Audio.Sound.createAsync({ uri: audioURL });
-        
-        console.log ('sound: ', sound);
 
         setAudio(sound);
         setDuration(sound._durationMillis);
-        setIsLoading(false);
 
+        // Set the listener here, right after creating the audio object
         sound.setOnPlaybackStatusUpdate((status) => {
+          console.log ("Updating position to " + status.positionMillis + "/" + duration)
           setPosition(status.positionMillis);
           if (status.didJustFinish) {
             console.log('COMPLETE');
             setIsPlaying(false);
           }
         });
+
+        setIsLoading(false);
+
       } catch (error) {
         console.error('Error fetching audio URL:', error);
         setIsLoading(false);
@@ -54,7 +56,8 @@ const App = () => {
     if (isPlaying) {
       await audio.pauseAsync();
     } else {
-      await audio.playAsync();
+      const playbackStatus = await audio.playAsync();
+      setPosition(playbackStatus.positionMillis);
     }
     setIsPlaying(!isPlaying);
   };
@@ -72,7 +75,11 @@ const App = () => {
       ) : (
         <>
           <TouchableOpacity onPress={handlePlayPause} disabled={!audio}>
-            <Text style={styles.button}>{isPlaying ? 'Pause' : 'Play'}</Text>
+            <MaterialIcons
+              name={isPlaying ? 'pause-circle-outline' : 'play-circle-outline'}
+              size={48}
+              color={'#3d5875'}
+            />
           </TouchableOpacity>
 
           <Slider
@@ -81,6 +88,10 @@ const App = () => {
             maximumValue={duration}
             value={position}
             onValueChange={handleSliderValueChange}
+            onSlidingComplete={handleSliderValueChange}
+            minimumTrackTintColor="#3d5875"
+            maximumTrackTintColor="#d3d3d3"
+            thumbTintColor="#3d5875"
           />
         </>
       )}
@@ -91,20 +102,18 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f7f7f7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  button: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
   slider: {
     width: '80%',
+    marginTop: 20,
   },
   loading: {
     fontSize: 18,
     marginBottom: 20,
+    color: '#3d5875',
   },
 });
 
