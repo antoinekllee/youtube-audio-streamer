@@ -9,21 +9,29 @@ const app = express();
 app.use(cors());
 app.timeout = 120000; // Set the timeout to 2 minutes
 
-app.use("/temp", express.static(path.join(__dirname, "temp")));
+const tempDirPath = path.join(__dirname, "temp");
+app.use("/temp", express.static(tempDirPath));
+
+const clearDirectory = async (directoryPath) => {
+    const files = fs.readdirSync(directoryPath);
+
+    for (const file of files) {
+        fs.unlinkSync(path.join(directoryPath, file));
+    }
+};
 
 app.get("/audio-url", async (req, res) => {
     const videoUrl = req.query.videoUrl;
     try {
+        // Clear the temp directory before fetching new audio
+        await clearDirectory(tempDirPath);
+
         const info = await ytdl.getInfo(videoUrl);
         const audioURL = ytdl.chooseFormat(info.formats, {
             filter: "audioonly",
         }).url;
 
-        const outputFilePath = path.join(
-            __dirname,
-            "temp",
-            `${Date.now()}.mp3`
-        ); // Define the output file path
+        const outputFilePath = path.join(tempDirPath, `${Date.now()}.mp3`); // Define the output file path
 
         const writeStream = fs.createWriteStream(outputFilePath); // Create a writable stream to save the converted audio
 
