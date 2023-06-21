@@ -13,10 +13,28 @@ const App = () => {
 
     const youtubeUrl = "https://www.youtube.com/watch?v=JJNQbAqPwI0";
 
+<<<<<<< HEAD
     useEffect(() => {
         (async () => {
             try {
                 setIsLoading(true);
+=======
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoading(true);
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+
+        const response = await fetch(`http://10.0.1.169:3000/audio-url?videoUrl=${encodeURIComponent(youtubeUrl)}`);
+        const { audioURL } = await response.json();
+>>>>>>> c52b2cf (playing on ios)
 
                 await Audio.setAudioModeAsync({
                     allowsRecordingIOS: false,
